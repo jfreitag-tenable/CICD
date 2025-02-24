@@ -1,0 +1,25 @@
+name: CI WAS Scan
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  tenablescan:
+    name: was-cicd
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+      - name: Build + Run PetStore
+        run: |
+          docker pull swaggerapi/petstore
+          docker run -d -e SWAGGER_URL=http://petstore:8080 -e SWAGGER_BASE_PATH=/v2 --name petstore swaggerapi/petstore
+      - name: Run WAS
+        run: |
+          docker pull tenable/was-scanner:latest
+          docker run -v $(pwd):/scanner -t -e WAS_MODE=cicd -e ACCESS_KEY=${ACCESS_KEY} -e SECRET_KEY=${SECRET_KEY} --link petstore tenable/was-scanner:latest || true
+          ls $(pwd)
+        env:
+          ACCESS_KEY: ${{ 143f9808d8cc923774aef6ba0ef852d7edd5e04f5c688164c76ee1e4208c2689 }}
+          SECRET_KEY: ${{ 006d4ee3a0982281c2fce5ced4519d5d83aecd5b66ac6cf53c63dd4d8e48e4e8 }}
